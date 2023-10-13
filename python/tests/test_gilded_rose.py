@@ -5,6 +5,8 @@ from typing import List, Tuple
 import pytest
 from gilded_rose.gilded_rose import GildedRose, Item
 
+AGED_BRIE_ITEM_NAME = "Aged Brie"
+
 
 def test_item_fields():
     """
@@ -76,7 +78,7 @@ def test_update_quantity_decrements_all_values():
         (1, 5, [(1, 5), (0, 4), (-1, 2), (-2, 0), (-3, 0)]),
     ],
 )
-def test_quality_value_progression(
+def test_generic_item_quality_value_progression(
     initial_sell_in: int,
     initial_quality: int,
     expected_progression: List[Tuple[int, int]],
@@ -90,6 +92,44 @@ def test_quality_value_progression(
     gilded_rose = GildedRose(
         [
             Item(name="foo", sell_in=initial_sell_in, quality=initial_quality),
+        ]
+    )
+    item = gilded_rose.items[0]
+
+    for sell_in, quality in expected_progression:
+        assert sell_in == item.sell_in
+        assert quality == item.quality
+        gilded_rose.update_quality()
+
+
+@pytest.mark.parametrize(
+    ("initial_sell_in", "initial_quality", "expected_progression"),
+    [
+        (3, 0, [(3, 0), (2, 1), (1, 2), (0, 3), (-1, 5), (-2, 7)]),
+        (10, 48, [(10, 48), (9, 49), (8, 50), (7, 50)]),
+        (3, 48, [(3, 48), (2, 49), (1, 50), (0, 50), (-1, 50)]),
+        (2, 48, [(2, 48), (1, 49), (0, 50), (-1, 50)]),
+        (1, 48, [(1, 48), (0, 49), (-1, 50), (-2, 50)]),
+    ],
+)
+def test_aged_brie_quality_value_progression(
+    initial_sell_in: int,
+    initial_quality: int,
+    expected_progression: List[Tuple[int, int]],
+):
+    """
+    GIVEN: An "Aged Brie" item.
+    WHEN: update_quantity is repeatedly called.
+    THEN: The quality will increase, increase twice as quickly when
+          past the sell by date, and never go above 50.
+    """
+    gilded_rose = GildedRose(
+        [
+            Item(
+                name=AGED_BRIE_ITEM_NAME,
+                sell_in=initial_sell_in,
+                quality=initial_quality,
+            ),
         ]
     )
     item = gilded_rose.items[0]
