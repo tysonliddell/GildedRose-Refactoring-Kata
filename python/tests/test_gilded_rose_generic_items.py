@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from typing import List, Tuple
+
 import pytest
 from gilded_rose.gilded_rose import GildedRose, Item
 
@@ -64,59 +66,35 @@ def test_update_quantity_decrements_all_values():
     assert 38 == item2.quality
 
 
-def test_quality_value_is_never_negative():
+@pytest.mark.parametrize(
+    ("initial_sell_in", "initial_quality", "expected_progression"),
+    [
+        (4, 3, [(4, 3), (3, 2), (2, 1), (1, 0), (0, 0), (-1, 0)]),
+        (3, 3, [(3, 3), (2, 2), (1, 1), (0, 0), (-1, 0)]),
+        (3, 4, [(3, 4), (2, 3), (1, 2), (0, 1), (-1, 0), (-2, 0)]),
+        (2, 4, [(2, 4), (1, 3), (0, 2), (-1, 0), (-2, 0)]),
+        (1, 5, [(1, 5), (0, 4), (-1, 2), (-2, 0), (-3, 0)]),
+    ],
+)
+def test_quality_value_progression(
+    initial_sell_in: int,
+    initial_quality: int,
+    expected_progression: List[Tuple[int, int]],
+):
     """
-    GIVEN: An item with non-negative quality.
+    GIVEN: A generic item.
     WHEN: update_quantity is repeatedly called.
-    THEN: The quality will reduce to zero, and never go negative.
+    THEN: The quality will reduce to zero, reduce twice as quickly when
+          past the sell by date, and never go negative.
     """
     gilded_rose = GildedRose(
         [
-            Item(name="foo", sell_in=10, quality=3),
+            Item(name="foo", sell_in=initial_sell_in, quality=initial_quality),
         ]
     )
     item = gilded_rose.items[0]
 
-    gilded_rose.update_quality()
-    assert 2 == item.quality
-    gilded_rose.update_quality()
-    assert 1 == item.quality
-    gilded_rose.update_quality()
-    assert 0 == item.quality
-
-    # the quality reach 0 in the previous call, it should remain zero with this
-    # call
-    gilded_rose.update_quality()
-    assert 0 == item.quality
-
-
-def test_quality_decreases_twice_as_fast_after_sell_by_date():
-    """
-    GIVEN: An item's sell_in value is <= 0.
-    WHEN: update_quantity is called.
-    THEN: The quality will reduce twice as fast (-2 instead of -1).
-    """
-    gilded_rose = GildedRose(
-        [
-            Item(name="foo", sell_in=2, quality=20),
-        ]
-    )
-    item = gilded_rose.items[0]
-    assert 2 == item.sell_in
-    assert 20 == item.quality
-
-    gilded_rose.update_quality()
-    assert 1 == item.sell_in
-    assert 19 == item.quality
-
-    gilded_rose.update_quality()
-    assert 0 == item.sell_in
-    assert 18 == item.quality
-
-    gilded_rose.update_quality()
-    assert -1 == item.sell_in
-    assert 16 == item.quality
-
-    gilded_rose.update_quality()
-    assert -2 == item.sell_in
-    assert 14 == item.quality
+    for sell_in, quality in expected_progression:
+        assert sell_in == item.sell_in
+        assert quality == item.quality
+        gilded_rose.update_quality()
