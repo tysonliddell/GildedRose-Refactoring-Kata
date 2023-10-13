@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "gilded-rose"
+version = "0.1.0"
+description = "The Gilded Rose kata code."
+authors = ["Tyson Liddell <tysonliddell@hotmail.com>"]
+readme = "README.md"
+packages = [{include = "gilded_rose"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pytest = "^7.4.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
