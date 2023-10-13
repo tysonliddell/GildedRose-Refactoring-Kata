@@ -5,7 +5,10 @@ from typing import List, Tuple
 import pytest
 from gilded_rose.gilded_rose import GildedRose, Item
 
+GENERIC_ITEM_NAME = "foo"
 AGED_BRIE_ITEM_NAME = "Aged Brie"
+SULFURAS_ITEM_NAME = "Sulfuras, Hand of Ragnaros"
+BACKSTAGE_PASSES_ITEM_NAME = "Backstage passes to a TAFKAL80ETC concert"
 
 
 def test_item_fields():
@@ -14,15 +17,15 @@ def test_item_fields():
     WHEN: An Item object is created with these values.
     THEN: These values should be avaiable as item properties.
     """
-    item = Item("foo", 10, 20)
-    assert "foo" == item.name
+    item = Item(GENERIC_ITEM_NAME, 10, 20)
+    assert GENERIC_ITEM_NAME == item.name
     assert 10 == item.sell_in
     assert 20 == item.quality
 
 
 @pytest.mark.xfail(reason="Not implemented")
 @pytest.mark.parametrize("illegal_quality", [-1, 51])
-def test_cannot_create_item_with_out_of_range_quality(illegal_quality):
+def test_cannot_create_generic_item_with_out_of_range_quality(illegal_quality):
     """
     GIVEN: A quality not in the range [0, 50].
     WHEN: An Item object is created with this value.
@@ -30,7 +33,7 @@ def test_cannot_create_item_with_out_of_range_quality(illegal_quality):
     """
     with pytest.raises(Exception):
         Item(
-            "foo",
+            GENERIC_ITEM_NAME,
             sell_in=10,
             quality=illegal_quality,
         )
@@ -38,7 +41,7 @@ def test_cannot_create_item_with_out_of_range_quality(illegal_quality):
 
 def test_update_quantity_decrements_all_values():
     """
-    GIVEN: A generic GildedRose object with multiple items.
+    GIVEN: A GildedRose object with multiple generic items.
     WHEN: update_quantity is called.
     THEN: The sell_in and quantity properties of all items should be decremented by 1.
     """
@@ -91,7 +94,9 @@ def test_generic_item_quality_value_progression(
     """
     gilded_rose = GildedRose(
         [
-            Item(name="foo", sell_in=initial_sell_in, quality=initial_quality),
+            Item(
+                name=GENERIC_ITEM_NAME, sell_in=initial_sell_in, quality=initial_quality
+            ),
         ]
     )
     item = gilded_rose.items[0]
@@ -127,6 +132,114 @@ def test_aged_brie_quality_value_progression(
         [
             Item(
                 name=AGED_BRIE_ITEM_NAME,
+                sell_in=initial_sell_in,
+                quality=initial_quality,
+            ),
+        ]
+    )
+    item = gilded_rose.items[0]
+
+    for sell_in, quality in expected_progression:
+        assert sell_in == item.sell_in
+        assert quality == item.quality
+        gilded_rose.update_quality()
+
+
+@pytest.mark.xfail(reason="Not implemented")
+@pytest.mark.parametrize(
+    "illegal_quality",
+    [-1, 0, 1, 79, 81],
+)
+def test_cannot_create_sulfuras_with_invalid_quality(illegal_quality: int):
+    """
+    GIVEN: A "Sulfuras, Hand of Ragnaros" item.
+    WHEN: A Sulfaras item is created with an quality that is not excatly 80.
+    THEN: An exception is raised.
+    """
+    with pytest.raises(Exception):
+        Item(
+            SULFURAS_ITEM_NAME,
+            sell_in=10,
+            quality=illegal_quality,
+        )
+
+
+@pytest.mark.parametrize(
+    ("initial_sell_in", "initial_quality", "expected_progression"),
+    [
+        (1, 80, [(1, 80), (1, 80), (1, 80)]),
+        (0, 80, [(0, 80), (0, 80), (0, 80)]),
+        (-1, 80, [(-1, 80), (-1, 80), (-1, 80)]),
+    ],
+)
+def test_sulfuras_quality_value_progression(
+    initial_sell_in: int,
+    initial_quality: int,
+    expected_progression: List[Tuple[int, int]],
+):
+    """
+    GIVEN: A "Sulfuras, Hand of Ragnaros" item.
+    WHEN: update_quantity is repeatedly called.
+    THEN: The quality is always 80.
+    """
+    gilded_rose = GildedRose(
+        [
+            Item(
+                name=SULFURAS_ITEM_NAME,
+                sell_in=initial_sell_in,
+                quality=initial_quality,
+            ),
+        ]
+    )
+    item = gilded_rose.items[0]
+
+    for sell_in, quality in expected_progression:
+        assert sell_in == item.sell_in
+        assert quality == item.quality
+        gilded_rose.update_quality()
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_cannot_create_backstage_passes_with_positive_quality_when_expired():
+    """
+    GIVEN:
+    WHEN: A Backstage Passes item is created with negative sell_in value and
+          positive quality.
+    THEN: An exception is raised.
+    """
+    with pytest.raises(Exception):
+        Item(
+            BACKSTAGE_PASSES_ITEM_NAME,
+            sell_in=-1,
+            quality=1,
+        )
+
+
+@pytest.mark.parametrize(
+    ("initial_sell_in", "initial_quality", "expected_progression"),
+    [
+        (12, 0, [(12, 0), (11, 1), (10, 2), (9, 4), (8, 6)]),
+        (6, 0, [(6, 0), (5, 2), (4, 5), (3, 8)]),
+        (2, 10, [(2, 10), (1, 13), (0, 16), (-1, 0), (-2, 0)]),
+    ],
+)
+def test_backstage_passes_quality_value_progression(
+    initial_sell_in: int,
+    initial_quality: int,
+    expected_progression: List[Tuple[int, int]],
+):
+    """
+    GIVEN: A Backstage Passes item.
+    WHEN: update_quantity is repeatedly called.
+    THEN: - The quality will increase by 1 when there are > 10 days to go,
+          - The quality will increase by 2 when 5 < sell_in <= 10.
+          - The quality will increase by 3 when 0 < sell_in <= 5.
+          - The quality will drop to zero when sell_in <= 0.
+    """
+    gilded_rose = GildedRose(
+        [
+            Item(
+                name=BACKSTAGE_PASSES_ITEM_NAME,
                 sell_in=initial_sell_in,
                 quality=initial_quality,
             ),
