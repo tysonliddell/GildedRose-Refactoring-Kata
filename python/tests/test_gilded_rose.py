@@ -23,7 +23,7 @@ def test_item_fields():
     assert 20 == item.quality
 
 
-@pytest.mark.xfail(reason="Not implemented")
+@pytest.mark.xfail(reason="Goblin needs to implement this.")
 @pytest.mark.parametrize("illegal_quality", [-1, 51])
 def test_cannot_create_generic_item_with_out_of_range_quality(illegal_quality):
     """
@@ -145,7 +145,7 @@ def test_aged_brie_quality_value_progression(
         gilded_rose.update_quality()
 
 
-@pytest.mark.xfail(reason="Not implemented")
+@pytest.mark.xfail(reason="Goblin needs to implement this.")
 @pytest.mark.parametrize(
     "illegal_quality",
     [-1, 0, 1, 79, 81],
@@ -199,7 +199,7 @@ def test_sulfuras_quality_value_progression(
         gilded_rose.update_quality()
 
 
-@pytest.mark.xfail(reason="Not implemented")
+@pytest.mark.xfail(reason="Goblin needs to implement this.")
 def test_cannot_create_backstage_passes_with_positive_quality_when_expired():
     """
     GIVEN:
