@@ -10,28 +10,35 @@ SULFURAS_ITEM_NAME = "Sulfuras, Hand of Ragnaros"
 BACKSTAGE_PASSES_ITEM_NAME = "Backstage passes to a TAFKAL80ETC concert"
 
 
-def get_next_day_quality_generic_item(item: "Item") -> int:
+def advance_day_generic_item(item: "Item"):
     new_quality = item.quality - 1 if item.sell_in > 0 else item.quality - 2
-    return max(new_quality, MIN_QUALITY)
+    item.quality = max(new_quality, MIN_QUALITY)
+    item.sell_in -= 1
 
 
-def get_next_day_quality_aged_brie(item: "Item") -> int:
+def advance_day_aged_brie(item: "Item"):
     new_quality = item.quality + 1 if item.sell_in > 0 else item.quality + 2
-    return min(new_quality, MAX_QUALITY)
+    item.quality = min(new_quality, MAX_QUALITY)
+    item.sell_in -= 1
 
 
-def get_next_day_quality_backstage_passes(item: "Item") -> int:
+def advance_day_sulfarus(item: "Item"):
+    # This item should have its fields unchanged between days
+    return
+
+
+def advance_day_backstage_passes(item: "Item"):
     if item.sell_in <= 0:
         # concert is over, backstage passes are worthless
-        return MIN_QUALITY
-
-    new_quality = item.quality + 1
-    if item.sell_in <= 10:
-        new_quality += 1
-    if item.sell_in <= 5:
-        new_quality += 1
-
-    return min(new_quality, MAX_QUALITY)
+        item.quality = MIN_QUALITY
+    else:
+        new_quality = item.quality + 1
+        if item.sell_in <= 10:
+            new_quality += 1
+        if item.sell_in <= 5:
+            new_quality += 1
+        item.quality = min(new_quality, MAX_QUALITY)
+    item.sell_in -= 1
 
 
 class GildedRose:
@@ -42,16 +49,13 @@ class GildedRose:
         for item in self.items:
             item_name = item.name
             if item_name == AGED_BRIE_ITEM_NAME:
-                item.quality = get_next_day_quality_aged_brie(item)
-                item.sell_in -= 1
+                advance_day_aged_brie(item)
             elif item_name == SULFURAS_ITEM_NAME:
-                item.quality = SULFURAS_QUALITY
+                advance_day_sulfarus(item)
             elif item_name == BACKSTAGE_PASSES_ITEM_NAME:
-                item.quality = get_next_day_quality_backstage_passes(item)
-                item.sell_in -= 1
+                advance_day_backstage_passes(item)
             else:
-                item.quality = get_next_day_quality_generic_item(item)
-                item.sell_in -= 1
+                advance_day_generic_item(item)
 
 
 class Item:
