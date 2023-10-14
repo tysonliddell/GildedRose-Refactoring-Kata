@@ -5,16 +5,13 @@ from gilded_rose.goblin import Item
 MIN_QUALITY = 0
 MAX_QUALITY = 50
 
-# Sulfuras quality does not have a quality in the range 0-50 like other items,
-# it always has a quality of 80.
-SULFURAS_QUALITY = 0
-
 
 class ItemType(Enum):
     GENERIC_ITEM = 0
     AGED_BRIE = 1
     SULFURAS = 2
     BACKSTAGE_PASSES = 3
+    CONJURED = 4
 
     @classmethod
     def from_item(cls, item: Item) -> "ItemType":
@@ -24,6 +21,8 @@ class ItemType(Enum):
             return cls.SULFURAS
         if "backstage passes" in item.name.lower():
             return cls.BACKSTAGE_PASSES
+        if "conjured" in item.name.lower():
+            return cls.CONJURED
         return cls.GENERIC_ITEM
 
 
@@ -35,12 +34,21 @@ def advance_item_day(item: Item):
         advance_day_sulfarus(item)
     elif item_type == ItemType.BACKSTAGE_PASSES:
         advance_day_backstage_passes(item)
+    elif item_type == ItemType.CONJURED:
+        advance_day_conjured_item(item)
     else:
         advance_day_generic_item(item)
 
 
 def advance_day_generic_item(item: Item):
     new_quality = item.quality - 1 if item.sell_in > 0 else item.quality - 2
+    item.quality = max(new_quality, MIN_QUALITY)
+    item.sell_in -= 1
+
+
+def advance_day_conjured_item(item: Item):
+    # Conjured items degrade in quality twice as fast as generic items.
+    new_quality = item.quality - 2 if item.sell_in > 0 else item.quality - 4
     item.quality = max(new_quality, MIN_QUALITY)
     item.sell_in -= 1
 

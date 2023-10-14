@@ -6,6 +6,7 @@ import pytest
 from gilded_rose.gilded_rose import GildedRose, Item
 
 GENERIC_ITEM_NAME = "foo"
+CONJURED_ITEM_NAME = "Conjured thing"
 AGED_BRIE_ITEM_NAME = "Aged Brie"
 SULFURAS_ITEM_NAME = "Sulfuras, Hand of Ragnaros"
 BACKSTAGE_PASSES_ITEM_NAME = "Backstage passes to a TAFKAL80ETC concert"
@@ -96,6 +97,47 @@ def test_generic_item_quality_value_progression(
         [
             Item(
                 name=GENERIC_ITEM_NAME, sell_in=initial_sell_in, quality=initial_quality
+            ),
+        ]
+    )
+    item = gilded_rose.items[0]
+
+    for sell_in, quality in expected_progression:
+        assert sell_in == item.sell_in
+        assert quality == item.quality
+        gilded_rose.update_quality()
+
+
+@pytest.mark.parametrize(
+    ("initial_sell_in", "initial_quality", "expected_progression"),
+    [
+        (4, 3, [(4, 3), (3, 1), (2, 0), (1, 0), (0, 0), (-1, 0)]),
+        (3, 3, [(3, 3), (2, 1), (1, 0), (0, 0), (-1, 0)]),
+        (3, 7, [(3, 7), (2, 5), (1, 3), (0, 1), (-1, 0), (-2, 0)]),
+        (3, 6, [(3, 6), (2, 4), (1, 2), (0, 0), (-1, 0), (-2, 0)]),
+        (2, 8, [(2, 8), (1, 6), (0, 4), (-1, 0), (-2, 0)]),
+        (1, 5, [(1, 5), (0, 3), (-1, 0), (-2, 0), (-3, 0)]),
+        (1, 7, [(1, 7), (0, 5), (-1, 1), (-2, 0), (-3, 0)]),
+    ],
+)
+def test_conjured_item_quality_value_progression(
+    initial_sell_in: int,
+    initial_quality: int,
+    expected_progression: List[Tuple[int, int]],
+):
+    """
+    GIVEN: A conjured item.
+    WHEN: update_quantity is repeatedly called.
+    THEN: - The quality will reduce to zero, reduce twice as quickly when
+            past the sell by date, and never go negative.
+          - The quality will reduce twice as quickly as generic items.
+    """
+    gilded_rose = GildedRose(
+        [
+            Item(
+                name=CONJURED_ITEM_NAME,
+                sell_in=initial_sell_in,
+                quality=initial_quality,
             ),
         ]
     )
