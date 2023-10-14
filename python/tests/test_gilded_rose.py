@@ -221,6 +221,7 @@ def test_cannot_create_backstage_passes_with_positive_quality_when_expired():
         (12, 0, [(12, 0), (11, 1), (10, 2), (9, 4), (8, 6)]),
         (6, 0, [(6, 0), (5, 2), (4, 5), (3, 8)]),
         (2, 10, [(2, 10), (1, 13), (0, 16), (-1, 0), (-2, 0)]),
+        (3, 46, [(3, 46), (2, 49), (1, 50), (0, 50), (-1, 0)]),
     ],
 )
 def test_backstage_passes_quality_value_progression(
@@ -235,6 +236,7 @@ def test_backstage_passes_quality_value_progression(
           - The quality will increase by 2 when 5 < sell_in <= 10.
           - The quality will increase by 3 when 0 < sell_in <= 5.
           - The quality will drop to zero when sell_in <= 0.
+          - The quality should never go above 50.
     """
     gilded_rose = GildedRose(
         [
